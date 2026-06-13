@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="AstrBot 观察面板 - 实时监控系统资源、运行状态和日志">
+    <meta name="theme-color" content="#101113">
+    <meta name="color-scheme" content="dark">
+    <link rel="icon" href='data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>'>
+    <title>AstrBot 观察面板</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="shell">
+      <aside class="workspace-sidebar" aria-label="工作台导航">
+        <header class="brand-block">
+          <h1>AstrBot 观察面板</h1>
+          <p id="subtitle" aria-live="polite">正在载入数据...</p>
+        </header>
+
+        <nav class="tabs" role="tablist" aria-label="视图切换">
+          <button class="tab active" type="button" role="tab" aria-selected="true" aria-controls="overview" data-tab="overview">总览</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="astrbot" data-tab="astrbot">AstrBot</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="logs" data-tab="logs">日志分析</button>
+          <button class="tab" type="button" role="tab" aria-selected="false" aria-controls="system" data-tab="system">系统</button>
+        </nav>
+
+        <section class="status-grid" aria-label="状态总览">
+          <article class="metric">
+            <span>系统</span>
+            <strong id="systemState">--</strong>
+            <small id="systemMeta">--</small>
+          </article>
+          <article class="metric">
+            <span>CPU</span>
+            <strong id="cpuState">--</strong>
+            <small id="cpuMeta">--</small>
+          </article>
+          <article class="metric">
+            <span>内存</span>
+            <strong id="memoryState">--</strong>
+            <small id="memoryMeta">--</small>
+          </article>
+          <article class="metric">
+            <span>消息</span>
+            <strong id="messageRate">--</strong>
+            <small id="messageRateMeta">--</small>
+          </article>
+          <article class="metric">
+            <span>延迟</span>
+            <strong id="apiLatency">--</strong>
+            <small id="apiLatencyMeta">--</small>
+          </article>
+          <article class="metric">
+            <span>日志</span>
+            <strong id="logsState">--</strong>
+            <small id="logsMeta">--</small>
+          </article>
+        </section>
+
+        <footer class="sidebar-status">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span id="sidebarStatusText">AstrBot 在线</span>
+          <label class="toggle">
+            <input id="autoRefresh" type="checkbox" checked aria-label="自动刷新开关">
+            <span>自动刷新</span>
+          </label>
+          <button id="refreshBtn" type="button" title="立即刷新数据" aria-label="刷新">刷新</button>
+        </footer>
+      </aside>
+
+      <section class="workspace-main" aria-label="主工作区">
+        <div class="workspace-head">
+          <strong id="workspaceTitle">总览</strong>
+          <span id="workspaceMeta">当前运行状态</span>
+        </div>
+
+        <section id="overview" class="view active" role="tabpanel" aria-labelledby="tab-overview">
+        <section class="panel big-screen-panel">
+          <div class="panel-head">
+            <h2>关键总览</h2>
+            <span id="bigScreenStamp">--</span>
+          </div>
+          <div id="bigScreenCards" class="big-screen-grid"></div>
+        </section>
+
+        <div class="layout two overview-live-layout">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>重要事件</h2>
+              <span id="overviewEventStamp">--</span>
+            </div>
+            <div id="overviewEventList" class="event-list compact-events"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>实时工具</h2>
+              <span id="overviewToolStamp">--</span>
+            </div>
+            <div id="overviewToolList" class="event-list compact-events"></div>
+          </section>
+        </div>
+
+        <details class="overview-details">
+          <summary>详细状态</summary>
+          <div class="layout two overview-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>资源概览</h2>
+                <span id="runtimeStamp">--</span>
+              </div>
+              <div id="resourceOverview" class="resource-grid"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>运行状态</h2>
+                <span id="hostStamp">--</span>
+              </div>
+              <div id="runtimeList" class="kv"></div>
+            </section>
+          </div>
+        </details>
+        </section>
+
+        <section id="system" class="view" role="tabpanel" aria-labelledby="tab-system" hidden>
+        <div class="layout two">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>主机信息</h2>
+              <span id="systemStamp">--</span>
+            </div>
+            <div id="systemInfo" class="kv"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>进程信息</h2>
+              <span id="processStamp">AstrBot 当前进程</span>
+            </div>
+            <div id="processInfo" class="kv"></div>
+          </section>
+        </div>
+
+        <div class="layout two system-sections">
+          <section class="panel">
+            <div class="panel-head">
+              <h2>磁盘</h2>
+              <span id="diskStamp">--</span>
+            </div>
+            <div id="diskList" class="stack-list"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h2>网络接口</h2>
+              <span id="networkStamp">--</span>
+            </div>
+            <div id="networkList" class="stack-list"></div>
+          </section>
+        </div>
+        </section>
+
+        <section id="astrbot" class="view" role="tabpanel" aria-labelledby="tab-astrbot" hidden>
+        <nav class="subtabs" role="tablist" aria-label="AstrBot 统计切换">
+          <button class="subtab active" type="button" role="tab" aria-selected="true" aria-controls="astrbotSessions" data-astrbot-tab="sessions">会话</button>
+          <button class="subtab" type="button" role="tab" aria-selected="false" aria-controls="astrbotModel" data-astrbot-tab="model">模型</button>
+          <button class="subtab" type="button" role="tab" aria-selected="false" aria-controls="astrbotLogs" data-astrbot-tab="logs">日志</button>
+        </nav>
+
+        <section id="astrbotSessions" class="astrbot-subview active" role="tabpanel">
+          <div class="layout two runtime-stats-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>会话来源</h2>
+                <span id="sessionSourceHint">--</span>
+              </div>
+              <div id="sessionSourceChart" class="bar-chart"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>规则分布</h2>
+                <span id="personaChartHint">--</span>
+              </div>
+              <div id="personaChart" class="bar-chart"></div>
+            </section>
+          </div>
+
+          <section class="panel">
+            <div class="panel-head">
+              <h2>用户活跃</h2>
+              <span id="senderChartHint">--</span>
+            </div>
+            <div id="senderChart" class="bar-chart"></div>
+          </section>
+        </section>
+
+        <section id="astrbotModel" class="astrbot-subview" role="tabpanel" hidden>
+          <div class="layout two log-insight-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>模型耗时与 Token</h2>
+                <span id="latencyChartHint">--</span>
+              </div>
+              <div id="latencyChart" class="bar-chart"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>工具耗时</h2>
+                <span id="toolChartHint">--</span>
+              </div>
+              <div id="toolChart" class="bar-chart"></div>
+            </section>
+          </div>
+        </section>
+
+        <section id="astrbotLogs" class="astrbot-subview" role="tabpanel" hidden>
+          <div class="layout two log-insight-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>事件类型</h2>
+                <span id="eventChartHint">--</span>
+              </div>
+              <div id="eventChart" class="bar-chart"></div>
+            </section>
+            <section class="panel log-visuals">
+              <div class="panel-head">
+                <h2>模块分布</h2>
+                <span id="sourceChartHint">--</span>
+              </div>
+              <div id="sourceChart" class="bar-chart module-chart"></div>
+            </section>
+          </div>
+          <div class="layout two log-insight-layout">
+            <section class="panel">
+              <div class="panel-head">
+                <h2>插件分布</h2>
+                <span id="pluginChartHint">--</span>
+              </div>
+              <div id="pluginChart" class="bar-chart"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-head">
+                <h2>工具调用</h2>
+                <span id="toolCallHint">--</span>
+              </div>
+              <div id="toolCallChart" class="bar-chart"></div>
+            </section>
+          </div>
+        </section>
+        </section>
+
+        <section id="logs" class="view" role="tabpanel" aria-labelledby="tab-logs" hidden>
+        <section class="panel important-panel">
+          <div class="panel-head">
+            <h2>重要信息</h2>
+            <span id="importantEventStamp">--</span>
+          </div>
+          <div class="event-toolbar panel-toolbar" role="group" aria-label="重要事件筛选">
+            <button class="event-filter active" type="button" data-event="all">全部事件</button>
+            <button class="event-filter" type="button" data-event="tool_call">工具调用</button>
+            <button class="event-filter" type="button" data-event="tool_result">工具返回</button>
+            <button class="event-filter" type="button" data-event="message_out">发送回复</button>
+            <button class="event-filter" type="button" data-event="slow">慢请求</button>
+            <button class="event-filter" type="button" data-event="warn">警告</button>
+            <button class="event-filter" type="button" data-event="error">错误</button>
+          </div>
+          <div id="importantEventList" class="event-list"></div>
+        </section>
+
+        <section class="panel log-stream-panel">
+          <div class="panel-head">
+            <h2>原始日志</h2>
+            <span id="logStreamMeta">--</span>
+          </div>
+          <div class="log-toolbar panel-toolbar">
+            <input id="logFilter" type="search" placeholder="搜索原始日志、模块、文件..." aria-label="搜索日志">
+            <div class="time-filters">
+              <button class="time-filter active" type="button" data-time="all" title="显示全部日志">全部</button>
+              <button class="time-filter" type="button" data-time="1h" title="最近1小时">1h</button>
+              <button class="time-filter" type="button" data-time="6h" title="最近6小时">6h</button>
+              <button class="time-filter" type="button" data-time="24h" title="今天">24h</button>
+            </div>
+          </div>
+          <div class="level-toolbar panel-toolbar" role="group" aria-label="日志级别筛选">
+            <button class="level-filter active" type="button" data-level="all">全部级别</button>
+            <button class="level-filter" type="button" data-level="error">错误</button>
+            <button class="level-filter" type="button" data-level="warn">警告</button>
+            <button class="level-filter" type="button" data-level="info">信息</button>
+            <button class="level-filter" type="button" data-level="debug">调试</button>
+            <button class="level-filter" type="button" data-level="trace">追踪</button>
+            <button class="level-filter" type="button" data-level="other">其他</button>
+          </div>
+          <div class="pager">
+            <button id="logPrevPage" type="button">上一页</button>
+            <span id="logPageInfo">--</span>
+            <button id="logNextPage" type="button">下一页</button>
+          </div>
+          <div id="logList" class="log-list"></div>
+        </section>
+        </section>
+      </section>
+
+      <aside class="workspace-detail" aria-label="详情面板">
+        <section class="panel detail-panel">
+          <div class="panel-head">
+            <h2 id="detailTitle">工作区详情</h2>
+            <span id="detailStamp">--</span>
+          </div>
+          <div id="detailBody" class="detail-body">
+            <div class="detail-empty">
+              <strong>选择事件查看证据</strong>
+              <span>点击重要信息后，这里会显示判定规则、来源行号、原始日志和会话链路。</span>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <script src="/app.js"></script>
+  </body>
+</html>
